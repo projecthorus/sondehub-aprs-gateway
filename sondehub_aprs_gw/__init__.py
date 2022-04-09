@@ -9,6 +9,7 @@ import sys
 import datetime
 import pprint
 import json
+from collections import OrderedDict
 
 CALLSIGN = os.getenv("CALLSIGN")
 SNS = os.getenv("SNS")
@@ -16,6 +17,8 @@ logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("aprslib").setLevel(logging.INFO)
 logging.getLogger("botocore").setLevel(logging.WARNING)
 sns = boto3.client('sns')
+
+rx_times = OrderedDict()
 
 class CustomFormatter(logging.Formatter):
 
@@ -78,18 +81,33 @@ def parser(x):
             logging.debug(f"{thing}")
 
 def aprs_to_sondehub(thing):
+    # use cached time stamp if none provided
+    if "timestamp" not in thing or thing['timestamp'] == 0:
+        non_path_raw = thing['raw'].split(":",1)[1]
+        if non_path_raw in rx_times:
+            thing_datetime = rx_times[non_path_raw]
+        else:
+            thing_datetime = datetime.datetime.utcnow().isoformat() + "Z"
+            rx_times[non_path_raw] = thing_datetime
+            if len(rx_times) > 100000:
+                rx_times.popitem(last=False)
+    else:
+        thing_datetime = datetime.datetime.fromtimestamp(thing["timestamp"], datetime.timezone.utc).isoformat() + "Z"
+    
     payload = {
         "software_name" : "aprs",
         "software_version": thing["to"],
-        "uploader_callsign": ",".join(thing["path"]),
+        "uploader_callsign": thing["path"][-1],
+        "path": ",".join(thing["path"]),
         "time_received": datetime.datetime.utcnow().isoformat() + "Z",
         "payload_callsign": thing["from"],
-        "datetime": datetime.datetime.fromtimestamp(thing["timestamp"], datetime.timezone.utc).isoformat() + "Z" if "time" in thing else datetime.datetime.utcnow().isoformat() + "Z",
+        "datetime": thing_datetime,
         "lat": thing["latitude"],
         "lon": thing["longitude"],
         "alt": thing["altitude"],
         "comment": thing["comment"] if "comment" in thing  else None,
-        "raw": thing["raw"]
+        "raw": thing["raw"],
+        "modulation": "APRS"
     }
     return payload
 
