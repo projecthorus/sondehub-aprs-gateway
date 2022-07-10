@@ -104,19 +104,19 @@ def aprs_to_sondehub(thing):
         if non_path_raw in rx_times:
             thing_datetime = rx_times[non_path_raw]
         else:
-            thing_datetime = datetime.datetime.utcnow().isoformat() + "Z"
+            thing_datetime = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
             rx_times[non_path_raw] = thing_datetime
             if len(rx_times) > 100000:
                 rx_times.popitem(last=False)
     else:
-        thing_datetime = datetime.datetime.fromtimestamp(thing["timestamp"], datetime.timezone.utc).isoformat() + "Z"
+        thing_datetime = datetime.datetime.fromtimestamp(thing["timestamp"], datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     
     payload = {
         "software_name" : "aprs",
         "software_version": thing["to"],
         "uploader_callsign": thing["path"][-1],
         "path": ",".join(thing["path"]),
-        "time_received": datetime.datetime.utcnow().isoformat() + "Z",
+        "time_received": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
         "payload_callsign": thing["from"],
         "datetime": thing_datetime,
         "lat": thing["latitude"],
