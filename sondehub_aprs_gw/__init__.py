@@ -71,8 +71,8 @@ def isHam(thing):
         return False
     if "Recupero Radiosonde" in thing["comment"]: # "radiosonde recovery"
         return False
-    if 'mbits' in thing: # mic-e - likely not a balloon
-        return False 
+    if thing["from"].startswith("WIDE"): # Corrupted packets due to bad iGates
+        return False
     
     return True
 
