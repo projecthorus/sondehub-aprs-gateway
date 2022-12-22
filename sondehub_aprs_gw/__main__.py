@@ -56,6 +56,7 @@ BLOCKED_TOCALLS = (
     'APHAX', # # {'raw': 'SQ5AAG-11>APHAX0,TCPIP*,qAC,T2ROMANIA:@231308h5224.50N/02057.30EO180/000/A=000940 Clb=0m/s P=0hPa T=0oC U=0% ID=T1550189 [404.50MHz]', 'from': 'SQ5AAG-11', 'to': 'APHAX0', 'path': ['TCPIP*', 'qAC', 'T2ROMANIA'], 'via': 'T2ROMANIA', 'messagecapable': True, 'raw_timestamp': '231308h', 'timestamp': 1641769988, 'format': 'uncompressed', 'posambiguity': 0, 'symbol': 'O', 'symbol_table': '/', 'latitude': 52.40833333333333, 'longitude': 20.955, 'course': 180, 'speed': 0.0, 'altitude': 286.512, 'comment': 'Clb=0m/s P=0hPa T=0oC U=0% ID=T1550189 [404.50MHz]'}
     'APAT51', # Anytone AT-D578UV APRS mobile radio
     'APDR', # APRSDroid
+    'OGFLR', # OGN Flarm Traffic (May need to add more tocalls here - refer https://github.com/glidernet/ogn-aprs-protocol/blob/master/aprsmsgs.txt )
 )
 
 def isHam(thing):
