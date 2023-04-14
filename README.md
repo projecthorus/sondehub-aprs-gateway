@@ -6,7 +6,6 @@ This gateway takes a feed of traffic from APRS-IS, looks for APRS position repor
 * [Mark Jessop](https://github.com/darksidelemm) - vk5qi@rfhead.net
 * [Michaela Wheeler](https://github.com/TheSkorm) - radiosonde@michaela.lgbt
 
-
 ## Packet Filtering
 Currently the following filters apply. Other requirements may be added in the future.
 
