@@ -10,6 +10,9 @@ import datetime
 import pprint
 import json
 from collections import OrderedDict
+from .comment_telemetry import extract_comment_telemetry
+
+VERSION = "2023.04.14"
 
 CALLSIGN = os.getenv("CALLSIGN")
 SNS = os.getenv("SNS")
@@ -131,8 +134,8 @@ def aprs_to_sondehub(thing):
         thing_datetime = datetime.datetime.fromtimestamp(thing["timestamp"], datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     
     payload = {
-        "software_name" : "aprs",
-        "software_version": thing["to"],
+        "software_name" : "SondeHub APRS-IS Gateway",
+        "software_version": VERSION,
         "uploader_callsign": thing["path"][-1],
         "path": ",".join(thing["path"]),
         "time_received": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
@@ -143,8 +146,13 @@ def aprs_to_sondehub(thing):
         "alt": thing["altitude"],
         "comment": thing["comment"] if "comment" in thing  else None,
         "raw": thing["raw"],
+        "aprs_tocall": thing["to"],
         "modulation": "APRS"
     }
+
+    # Attempt to extract any comment-field telemetry
+    payload.update(extract_comment_telemetry(payload))
+
     return payload
 
 a = aprs.TCP(CALLSIGN.encode(), str(aprslib.passcode(CALLSIGN)).encode(), aprs_filter="s/O//".encode()) # filter position and balloon
