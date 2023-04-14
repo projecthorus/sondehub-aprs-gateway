@@ -69,7 +69,7 @@ def extract_stratotrack_telemetry(payload):
 
         return output
     except Exception as e:
-        logging.exception("Error extracting telemtry from StratoTrack")
+        logging.exception("Error extracting telemetry from StratoTrack")
 
 
     return {}
@@ -95,7 +95,7 @@ def extract_wb8elk_skytracker_telemetry(payload):
 
         return output
     except Exception as e:
-        logging.exception("Error extracting telemtry from WB8ELK SkyTracker")
+        logging.exception("Error extracting telemetry from WB8ELK SkyTracker")
 
     return {}
 
