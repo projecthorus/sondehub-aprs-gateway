@@ -32,6 +32,9 @@ We block packets with the following in their path:
 We also block packets from the following source callsigns:
  - Any source callsign containing `WIDE`, which usually indicates a corrupted packet.
 
+## Timestamps
+The APRS-IS importer will parse and use timestamps included in APRS packets, e.g. the `HHMMSSh` format. Note that we assume that all timestamps are in UTC. If this is not the case, you may experience strange behaviour on the tracker!
+
 ## Telemetry
 Currently we do not support decoding APRS telemetry packets, though this may be added in the future.
 

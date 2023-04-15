@@ -77,7 +77,7 @@ def extract_stratotrack_telemetry(payload):
         if _fields[5].endswith('C'):
             output['temp'] = float(_fields[5][:-1])
         if _fields[6].endswith('Pa'):
-            output['pressure'] = float(_fields[6][:-2])/100.0
+            output['ext_pressure'] = float(_fields[6][:-2])/100.0
 
         return output
     except Exception as e:
@@ -136,7 +136,7 @@ def extract_lightaprs_telemetry(payload):
             output['temp'] = float(_fields[1][:-1])
 
         if _fields[2].endswith('hPa'):
-            output['pressure'] = float(_fields[2][:-3])
+            output['ext_pressure'] = float(_fields[2][:-3])
 
         if _fields[3].endswith('V'):
             output['batt'] = float(_fields[3][:-1])
