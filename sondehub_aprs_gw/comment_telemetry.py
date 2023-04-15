@@ -4,11 +4,12 @@
 #   Mark Jessop <vk5qi@rfhead.net>
 #
 import logging
+import re
 
 # APRS tocalls (device IDs) of trackers which are known to send comment-field
 # telemetry with satellite information reported as 'Sn', and commonly send 
 # positions with no GNSS lock ('S0')
-APRS_S0_TRACKERS = ['APZQAP', 'APZ41N', 'APBCRS']
+APRS_S0_TRACKERS = ['APZQAP', 'APBCRS']
 
 def extract_comment_telemetry(payload):
     """
@@ -35,6 +36,10 @@ def extract_comment_telemetry(payload):
         # LightAPRS
         if payload['aprs_tocall'] == 'APLIGA':
             return extract_lightaprs_telemetry(payload)
+
+        # RS41ng
+        if payload['aprs_tocall'] == 'APZ41N':
+            return extract_RS41ng_telemetry(payload)
 
         # Detect trackers that are known to send positions with no
         # GNSS lock, and report this in the comment field as 'S0'
@@ -147,6 +152,45 @@ def extract_lightaprs_telemetry(payload):
     return {}
 
 
+def extract_RS41ng_telemetry(payload):
+    """
+    Attempt to extract telemetry from a RS41ng tracker comment field.
+    Example: P6S7T29V2947C00 JO00WW - RS41ng radiosonde Toto test
+    Link: https://github.com/mikaelnousiainen/RS41ng
+    """
+
+    try:
+        output = {'model': 'RS41ng'}
+
+        # Split comment field, telemetry should be the first
+        _fields = payload['comment'].split()
+
+        # Extract telemetry segments
+        pattern = r'([A-Z])(\d+)'
+        _matches = re.findall(pattern, _fields[0])
+
+        # Iterate through the found matches, and look for specific identifiers
+        for _telem in _matches:
+            _type = _telem[0]
+            _data = _telem[1]
+
+            if _type == 'P':
+                output['frame'] = int(_data)
+            elif _type == 'S':
+                output['sats'] = int(_data)
+            elif _type == 'T':
+                output['temp'] = int(_data)
+            elif _type == 'V':
+                output['batt'] = int(_data)/1000.0
+
+        return output
+
+    except Exception as e:
+        logging.exception("Error extracting telemetry from RS41ng telemetry")
+
+    return {}
+
+
 def extract_aprs_s0_telemetry(payload):
     """
     Special case for a set of APRS tracker firmware (seems to be mainly for RS41s)
@@ -190,7 +234,9 @@ if __name__ == "__main__":
         # LightAPRS
         {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.04.14","uploader_callsign":"N3LLO-1","path":"W1YK-1*,WIDE2-2,qAR,N3LLO-1","time_received":"2023-04-14T19:42:45.578796Z","payload_callsign":"N0LQ-11","datetime":"2023-04-14T19:42:39.000000Z","lat":42.27433333333333,"lon":-71.8075,"alt":145.9992,"comment":"011TxC  36.10C 1034.61hPa  4.93V 08S WPI SDC Gompei-0 Mission","raw":"N0LQ-11>APLIGA,W1YK-1*,WIDE2-2,qAR,N3LLO-1:/194239h4216.46N/07148.45WO353/000/A=000479 011TxC  36.10C 1034.61hPa  4.93V 08S WPI SDC Gompei-0 Mission","aprs_tocall":"APLIGA","modulation":"APRS","position":"42.27433333333333,-71.8075"},
         # Another LightAPRS
-        {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.04.14","uploader_callsign":"KB9LNS-5","path":"WIDE1-1,WIDE2-1,qAO,KB9LNS-5","time_received":"2023-04-14T18:20:04.848026Z","payload_callsign":"KB9LNS-11","datetime":"2023-04-14T18:20:02.000000Z","lat":40.47531868131868,"lon":-88.94545054945056,"alt":261.8232,"comment":"009TxC  23.50C  983.29hPa  4.92V 04S Testing LightAPRS-W 2.0","raw":"KB9LNS-11>APLIGA,WIDE1-1,WIDE2-1,qAO,KB9LNS-5:/182002h4028.51N/08856.72WO158/002/A=000859 009TxC  23.50C  983.29hPa  4.92V 04S Testing LightAPRS-W 2.0 !wta!","aprs_tocall":"APLIGA","modulation":"APRS","position":"40.47531868131868,-88.94545054945056"}
+        {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.04.14","uploader_callsign":"KB9LNS-5","path":"WIDE1-1,WIDE2-1,qAO,KB9LNS-5","time_received":"2023-04-14T18:20:04.848026Z","payload_callsign":"KB9LNS-11","datetime":"2023-04-14T18:20:02.000000Z","lat":40.47531868131868,"lon":-88.94545054945056,"alt":261.8232,"comment":"009TxC  23.50C  983.29hPa  4.92V 04S Testing LightAPRS-W 2.0","raw":"KB9LNS-11>APLIGA,WIDE1-1,WIDE2-1,qAO,KB9LNS-5:/182002h4028.51N/08856.72WO158/002/A=000859 009TxC  23.50C  983.29hPa  4.92V 04S Testing LightAPRS-W 2.0 !wta!","aprs_tocall":"APLIGA","modulation":"APRS","position":"40.47531868131868,-88.94545054945056"},
+        # RS41ng
+        {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.04.14","uploader_callsign":"F6ASP","path":"WIDE1-1,WIDE2-1,qAO,F6ASP","time_received":"2023-04-14T16:28:43.047244Z","payload_callsign":"F1DZP-11","datetime":"2023-04-14T16:28:43.047218Z","lat":50.94133333333333,"lon":1.8599999999999999,"alt":0.9144000000000001,"comment":"P6S7T29V2947C00 JO00WW - RS41ng radiosonde Toto test","raw":"F1DZP-11>APZ41N,WIDE1-1,WIDE2-1,qAO,F6ASP:!5056.48N/00151.60EO021/000/A=000003/P6S7T29V2947C00 JO00WW - RS41ng radiosonde Toto test","aprs_tocall":"APZ41N","modulation":"APRS","position":"50.94133333333333,1.8599999999999999"},
     ]
 
 
