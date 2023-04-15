@@ -37,7 +37,13 @@ Currently we do not support decoding APRS telemetry packets, though this may be 
 
 There is some limited support for decoding telemetry from the comment field of the following APRS tracker models:
 - High Altitude Science [StratoTrack](https://www.highaltitudescience.com/products/stratotrack-aprs-transmitter)
+  - Allowed Format: `,StrTrk,84,9,1.46V,-14C,2127Pa,`
 - WB8ELK [SkyTracker](https://gmigliarini.wixsite.com/wb8elk)
+  - Allowed Format: `12 4.34 33 1991 101`
+- [LightAPRS](https://github.com/lightaprs/LightAPRS-W-1.0)
+  - Allowed Format: `015TxC 29.00C 1019.86hPa 4.59V 06S Custom comment here`
+
+Note that the telemetry must be exactly in the provided format, else parsing will fail.
 
 If you would like support added for another tracker model, please contact us.
 

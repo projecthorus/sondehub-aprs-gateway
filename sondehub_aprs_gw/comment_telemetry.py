@@ -5,7 +5,10 @@
 #
 import logging
 
-APRS_S0_TRACKERS = ['APZQAP', 'APZ41N']
+# APRS tocalls (device IDs) of trackers which are known to send comment-field
+# telemetry with satellite information reported as 'Sn', and commonly send 
+# positions with no GNSS lock ('S0')
+APRS_S0_TRACKERS = ['APZQAP', 'APZ41N', 'APBCRS']
 
 def extract_comment_telemetry(payload):
     """
@@ -26,8 +29,12 @@ def extract_comment_telemetry(payload):
             return extract_stratotrack_telemetry(payload)
 
         # Detect WB8ELK Skytracker by the toCall
-        if payload['aprs_tocall'].startswith('APELK'):
+        if payload['aprs_tocall'].startswith('APELK0'):
             return extract_wb8elk_skytracker_telemetry(payload)
+
+        # LightAPRS
+        if payload['aprs_tocall'] == 'APLIGA':
+            return extract_lightaprs_telemetry(payload)
 
         # Detect trackers that are known to send positions with no
         # GNSS lock, and report this in the comment field as 'S0'
@@ -84,18 +91,58 @@ def extract_wb8elk_skytracker_telemetry(payload):
     try:
         output = {'model': 'WB8ELK SkyTracker'}
 
-        # Space-delimited fields
-        _fields = payload['comment'].split(' ')
+        # Space-delimited fields, but use split with no argument in case of more than one space
+        _fields = payload['comment'].split()
 
         # Only extract data if we have the exact number of expected fields.
         if len(_fields) == 5:
             output['sats'] = int(_fields[0])
-            output['batt'] = float(_fields[1])
-            # The rest of the fields i'm unsure about...
+            output['solar_panel'] = float(_fields[1])
+            output['temp'] = float(_fields[2])
+            # Field 3 is altitude in metres, so no need to extract this.
+            output['frame'] = int(_fields[4])
 
         return output
     except Exception as e:
         logging.exception("Error extracting telemetry from WB8ELK SkyTracker")
+
+    return {}
+
+
+def extract_lightaprs_telemetry(payload):
+    """
+    Attempt to extract telemetry from a LightAPRS tracker comment field.
+    Example: 015TxC 29.00C 1019.86hPa 4.59V 06S
+    Link: https://github.com/lightaprs/LightAPRS-W-1.0/blob/master/LightAPRS-W-pico-balloon/LightAPRS-W-pico-balloon.ino#L497
+    """
+
+    try:
+        output = {'model': 'LightAPRS'}
+
+        # Space delimited fields, but sometimes with more than one space.
+        _fields = payload['comment'].split()
+
+        print(_fields)
+        # Explicitly check for the expected suffix on every field.
+        if _fields[0].endswith('TxC'):
+            output['frame'] = int(_fields[0][:-3])
+        
+        if _fields[1].endswith('C'):
+            output['temp'] = float(_fields[1][:-1])
+
+        if _fields[2].endswith('hPa'):
+            output['pressure'] = float(_fields[2][:-3])
+
+        if _fields[3].endswith('V'):
+            output['batt'] = float(_fields[3][:-1])
+
+        if _fields[4].endswith('S'):
+            output['sats'] = int(_fields[4][:-1])
+
+        return output
+
+    except Exception as e:
+        logging.exception("Error extracting telemetry from LightAPRS Tracker")
 
     return {}
 
@@ -118,6 +165,7 @@ def extract_aprs_s0_telemetry(payload):
     Examples of firmware that do this:
     https://github.com/SQ9MDD/RS41-APRS-tracker
     https://github.com/mikaelnousiainen/RS41ng
+    (Unknown firmware with tocall APBCRS)
 
     """
 
@@ -138,7 +186,11 @@ if __name__ == "__main__":
         # StratoTrack	
         {"software_name":"aprs","aprs_tocall":"CQ","uploader_callsign":"SIMLA","path":"WIDE2-1,qAR,SIMLA","time_received":"2023-04-13T15:54:54.121790Z","payload_callsign":"KF0GOR-12","datetime":"2023-04-13T15:54:54.121763Z","lat":40.05766666666667,"lon":-104.36033333333333,"alt":25997.0016,"comment":",StrTrk,84,9,1.46V,-14C,2127Pa,","raw":"KF0GOR-12>CQ,WIDE2-1,qAR,SIMLA:!4003.46N/10421.62WO307/017/A=085292,StrTrk,84,9,1.46V,-14C,2127Pa,","modulation":"APRS","position":"40.05766666666667,-104.36033333333333"},
         # SQ9MDD firmware with no GNSS lock
-        {"software_name":"aprs","aprs_tocall":"APZQAP","uploader_callsign":"IR9BV","path":"WIDE1-1,WIDE2-1,qAR,IR9BV","time_received":"2023-04-11T08:48:05.782402Z","payload_callsign":"IT9EWK","datetime":"2023-04-11T08:48:05.782377Z","lat":8.744166666666667,"lon":10.623833333333334,"alt":470.6112,"comment":"P8/S0/T24/V269/ 08:48:05/EV/BT-257.0°C/https://www.pirssicilia.it Beacon CW 432.450 MHz","raw":"IT9EWK>APZQAP,WIDE1-1,WIDE2-1,qAR,IR9BV:!0844.65N/01037.43EO/A=001544/P8/S0/T24/V269/ 08:48:05/EV/BT-257.0°C/https://www.pirssicilia.it Beacon CW 432.450 MHz","modulation":"APRS","position":"8.744166666666667,10.623833333333334"}
+        {"software_name":"aprs","aprs_tocall":"APZQAP","uploader_callsign":"IR9BV","path":"WIDE1-1,WIDE2-1,qAR,IR9BV","time_received":"2023-04-11T08:48:05.782402Z","payload_callsign":"IT9EWK","datetime":"2023-04-11T08:48:05.782377Z","lat":8.744166666666667,"lon":10.623833333333334,"alt":470.6112,"comment":"P8/S0/T24/V269/ 08:48:05/EV/BT-257.0°C/https://www.pirssicilia.it Beacon CW 432.450 MHz","raw":"IT9EWK>APZQAP,WIDE1-1,WIDE2-1,qAR,IR9BV:!0844.65N/01037.43EO/A=001544/P8/S0/T24/V269/ 08:48:05/EV/BT-257.0°C/https://www.pirssicilia.it Beacon CW 432.450 MHz","modulation":"APRS","position":"8.744166666666667,10.623833333333334"},
+        # LightAPRS
+        {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.04.14","uploader_callsign":"N3LLO-1","path":"W1YK-1*,WIDE2-2,qAR,N3LLO-1","time_received":"2023-04-14T19:42:45.578796Z","payload_callsign":"N0LQ-11","datetime":"2023-04-14T19:42:39.000000Z","lat":42.27433333333333,"lon":-71.8075,"alt":145.9992,"comment":"011TxC  36.10C 1034.61hPa  4.93V 08S WPI SDC Gompei-0 Mission","raw":"N0LQ-11>APLIGA,W1YK-1*,WIDE2-2,qAR,N3LLO-1:/194239h4216.46N/07148.45WO353/000/A=000479 011TxC  36.10C 1034.61hPa  4.93V 08S WPI SDC Gompei-0 Mission","aprs_tocall":"APLIGA","modulation":"APRS","position":"42.27433333333333,-71.8075"},
+        # Another LightAPRS
+        {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.04.14","uploader_callsign":"KB9LNS-5","path":"WIDE1-1,WIDE2-1,qAO,KB9LNS-5","time_received":"2023-04-14T18:20:04.848026Z","payload_callsign":"KB9LNS-11","datetime":"2023-04-14T18:20:02.000000Z","lat":40.47531868131868,"lon":-88.94545054945056,"alt":261.8232,"comment":"009TxC  23.50C  983.29hPa  4.92V 04S Testing LightAPRS-W 2.0","raw":"KB9LNS-11>APLIGA,WIDE1-1,WIDE2-1,qAO,KB9LNS-5:/182002h4028.51N/08856.72WO158/002/A=000859 009TxC  23.50C  983.29hPa  4.92V 04S Testing LightAPRS-W 2.0 !wta!","aprs_tocall":"APLIGA","modulation":"APRS","position":"40.47531868131868,-88.94545054945056"}
     ]
 
 
