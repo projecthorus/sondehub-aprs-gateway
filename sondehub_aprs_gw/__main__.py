@@ -12,7 +12,7 @@ import json
 from collections import OrderedDict
 from .comment_telemetry import extract_comment_telemetry
 
-VERSION = "2023.04.16"
+VERSION = "2023.06.24"
 
 CALLSIGN = os.getenv("CALLSIGN")
 SNS = os.getenv("SNS")
@@ -88,6 +88,10 @@ def isHam(thing):
             return False
         if "Recupero Radiosonde" in thing["comment"]: # "radiosonde recovery"
             return False
+        if ("Weather Balloon" in thing["comment"]): # Turkish Radiosonde uploads, circa June 2023
+            if thing["to"] == thing["from"]:
+                return False
+
 
     # Default case. We have a position report with a balloon symbol, and it's passed the above checks,
     # so we consider it to be an amateur balloon. Filtering based on altitude will be handled in the tracker.
