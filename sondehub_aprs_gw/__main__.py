@@ -12,7 +12,7 @@ import json
 from collections import OrderedDict
 from .comment_telemetry import extract_comment_telemetry
 
-VERSION = "2023.06.24"
+VERSION = "2023.07.30"
 
 CALLSIGN = os.getenv("CALLSIGN")
 SNS = os.getenv("SNS")

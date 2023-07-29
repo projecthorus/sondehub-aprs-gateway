@@ -7,9 +7,9 @@ import logging
 import re
 
 # APRS tocalls (device IDs) of trackers which are known to send comment-field
-# telemetry with satellite information reported as 'Sn', and commonly send 
-# positions with no GNSS lock ('S0')
-APRS_S0_TRACKERS = ['APZQAP', 'APBCRS']
+# telemetry with satellite information reported as 'Sn' or 'Sats=0', and commonly send 
+# positions with no GNSS lock ('S0', 'Sats=0')
+APRS_S0_TRACKERS = ['APZQAP', 'APBCRS', 'APZQVA']
 
 def extract_comment_telemetry(payload):
     """
@@ -203,6 +203,8 @@ def extract_aprs_s0_telemetry(payload):
     where 'S0' indicates no GNSS lock, yet the tracker still beacons invalid
     positions.
 
+    There are also trackers which report no sats as 'Sats=0' or 'Sat=0'
+
     To handle this, we add telemetry indicating the lack of GNSS lock, which
     can be filtered on the tracker.
 
@@ -213,10 +215,12 @@ def extract_aprs_s0_telemetry(payload):
 
     """
 
-    if "S0" in payload['comment']:
-        return {'sats': 0}
-    else:
-        return {}
+    for sat_filter in ['S0', 'Sats=0', 'Sat=0']:
+        if sat_filter in payload['comment']:
+            return {'sats': 0}
+    
+    return {}
+
 
 
 if __name__ == "__main__":
@@ -237,6 +241,10 @@ if __name__ == "__main__":
         {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.04.14","uploader_callsign":"KB9LNS-5","path":"WIDE1-1,WIDE2-1,qAO,KB9LNS-5","time_received":"2023-04-14T18:20:04.848026Z","payload_callsign":"KB9LNS-11","datetime":"2023-04-14T18:20:02.000000Z","lat":40.47531868131868,"lon":-88.94545054945056,"alt":261.8232,"comment":"009TxC  23.50C  983.29hPa  4.92V 04S Testing LightAPRS-W 2.0","raw":"KB9LNS-11>APLIGA,WIDE1-1,WIDE2-1,qAO,KB9LNS-5:/182002h4028.51N/08856.72WO158/002/A=000859 009TxC  23.50C  983.29hPa  4.92V 04S Testing LightAPRS-W 2.0 !wta!","aprs_tocall":"APLIGA","modulation":"APRS","position":"40.47531868131868,-88.94545054945056"},
         # RS41ng
         {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.04.14","uploader_callsign":"F6ASP","path":"WIDE1-1,WIDE2-1,qAO,F6ASP","time_received":"2023-04-14T16:28:43.047244Z","payload_callsign":"F1DZP-11","datetime":"2023-04-14T16:28:43.047218Z","lat":50.94133333333333,"lon":1.8599999999999999,"alt":0.9144000000000001,"comment":"P6S7T29V2947C00 JO00WW - RS41ng radiosonde Toto test","raw":"F1DZP-11>APZ41N,WIDE1-1,WIDE2-1,qAO,F6ASP:!5056.48N/00151.60EO021/000/A=000003/P6S7T29V2947C00 JO00WW - RS41ng radiosonde Toto test","aprs_tocall":"APZ41N","modulation":"APRS","position":"50.94133333333333,1.8599999999999999"},
+        # Unknown tracker, sending Sats=0
+        {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.06.24","uploader_callsign":"IS0HHA-12","path":"WIDE2-2,qAR,IS0HHA-12","time_received":"2023-07-29T22:32:17.713152Z","payload_callsign":"IS0HHA-2","datetime":"2023-07-29T22:32:15.000000Z","lat":-21.038369963369963,"lon":115.07478021978022,"alt":0,"comment":"Clb=0.00 Volt=2.76 Sats=0 Fixed=0 - RS41 tracker","raw":"IS0HHA-2>APZQVA,WIDE2-2,qAR,IS0HHA-12:@223215h2102.30S/11504.48EO045/000/A=000000!w5_!Clb=0.00 Volt=2.76 Sats=0 Fixed=0 - RS41 tracker","aprs_tocall":"APZQVA","modulation":"APRS","position":"-21.038369963369963,115.07478021978022"},
+        # Unknown tracker, sending Sat=0
+        {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.06.24","uploader_callsign":"IT9DBI-4","path":"IT9LSG-2*,WIDE2-2,qAO,IT9DBI-4","time_received":"2023-07-29T16:16:06.869305Z","payload_callsign":"IT9EJE-12","datetime":"2023-07-29T16:16:06.869281Z","lat":22.591666666666665,"lon":-11.227833333333333,"alt":3099.2064,"comment":"Pkt=2/Sat=0/T25/Mvolts=272/Temp=32.1°C /RS41 Test qrv R3 IR9UBR whatsapp 3393985905","raw":"IT9EJE-12>APZQAP,IT9LSG-2*,WIDE2-2,qAO,IT9DBI-4:!2235.50N/01113.67WO/A=010168/Pkt=2/Sat=0/T25/Mvolts=272/Temp=32.1°C /RS41 Test qrv R3 IR9UBR whatsapp 3393985905","aprs_tocall":"APZQAP","modulation":"APRS","position":"22.591666666666665,-11.227833333333333"}
     ]
 
 
