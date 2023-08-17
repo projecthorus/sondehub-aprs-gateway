@@ -173,6 +173,7 @@ def parser(x):
             "latitude": thing["latitude"],
             "longitude": thing["longitude"],
             "altitude": thing["altitude"] if "altitude" in thing else 0,
+            "comment": thing["comment"] if "comment" in thing else None,
             "last_sondehub_upload": None
         }
     except:
@@ -187,7 +188,7 @@ def upload_listener(payload):
         listener = {
             "software_name" : "SondeHub APRS-IS Gateway",
             "software_version": VERSION,
-
+        
             "uploader_callsign": callsign,
             "uploader_position": [
                 position["latitude"],
@@ -196,6 +197,8 @@ def upload_listener(payload):
             ],
             "mobile": False
         }
+        if position['comment']:
+            listener['uploader_radio'] = position['comment']
         post_listener(listener)
         logging.info(listener)
         logging.info(f"Listener SNS published!")
