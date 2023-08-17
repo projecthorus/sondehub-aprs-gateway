@@ -1,6 +1,5 @@
 import socket
 socket.setdefaulttimeout(10)
-import aprs
 import aprslib
 import boto3
 import os
@@ -15,11 +14,15 @@ from .comment_telemetry import extract_comment_telemetry
 VERSION = "2023.07.30"
 
 CALLSIGN = os.getenv("CALLSIGN")
-SNS = os.getenv("SNS")
+SNS_PAYLOAD = os.getenv("SNS")
+SNS_LISTENER = os.getenv("SNS_LISTENER")
+TIME_BETWEEN_LISTENER_UPDATES = 600 # 10 minutes
 logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("aprslib").setLevel(logging.INFO)
 logging.getLogger("botocore").setLevel(logging.WARNING)
 sns = boto3.client('sns')
+
+positions = {}
 
 rx_times = OrderedDict()
 
@@ -69,6 +72,8 @@ BLOCKED_FROMCALLS = (
     'WIDE' # Corrupted packets due to bad iGates.
 )
 
+POSITIONS = {}
+
 def isHam(thing):
     if "SONDEGATE" in thing["path"]: # {'raw': 'T1310753>APRARX,SONDEGATE,TCPIP,qAR,DF7OA-12:/233445h5242.24N/00959.93EO152/042/A=043155 Clb=3.7m/s t=-55.5C 405.701 MHz Type=RS41-SGP Radiosonde auto_rx v1.3.2 !w,%!', 'from': 'T1310753', 'to': 'APRARX', 'path': ['SONDEGATE', 'TCPIP', 'qAR', 'DF7OA-12'], 'via': 'DF7OA-12', 'messagecapable': False, 'raw_timestamp': '233445h', 'timestamp': 1641771285, 'format': 'uncompressed', 'posambiguity': 0, 'symbol': 'O', 'symbol_table': '/', 'latitude': 52.70402014652015, 'longitude': 9.99884065934066, 'course': 152, 'speed': 77.784, 'altitude': 13153.644, 'daodatumbyte': 'W', 'comment': 'Clb=3.7m/s t=-55.5C 405.701 MHz Type=RS41-SGP Radiosonde auto_rx v1.3.2'}
         return False
@@ -100,11 +105,34 @@ def isHam(thing):
 def parser(x):
     try:
         thing = aprslib.parse(bytes(x))
+    except (aprslib.exceptions.ParseError, aprslib.exceptions.UnknownFormat) as e:
+        logging.debug(f"Error parsing APRS packet ({str(x)}): {str(e)}")
+        return
     except Exception as e:
         logging.exception(f"Error parsing APRS packet ({str(x)})", exc_info=e)
         return
 
-    if thing["format"] != "object":
+    # chase car
+    if 'SHUB' in thing['path'] or 'SHUB1-1' in thing['path']:
+        logging.info("Chase car:")
+        logging.info(f"{thing}")
+        try:
+            payload = chase_aprs_to_sondehub(thing)
+            logging.info(f"payload: \n{pprint.pformat(payload)}\n")
+        except Exception as e:
+                logging.exception("Error converting to SondeHub payload type", exc_info=e)
+                return
+        try:
+            sns.publish(
+                TopicArn=SNS_LISTENER,
+                Message=json.dumps(payload)
+            )
+            logging.info(f"SNS published!")
+        except:
+            logging.exception("Error publishing to SNS topic")
+
+    # balloons
+    if thing["format"] != "object" and thing['symbol'] == 'O' and thing['symbol_table'] == "/":
         if isHam(thing):
             logging.info(f"{thing}")
             try:
@@ -112,16 +140,62 @@ def parser(x):
                 logging.info(f"payload: \n{pprint.pformat(payload)}\n")
             except Exception as e:
                 logging.exception("Error converting to SondeHub payload type", exc_info=e)
+                return
             try:
                 sns.publish(
-                    TopicArn=SNS,
+                    TopicArn=SNS_PAYLOAD,
                     Message=json.dumps(payload)
                 )
                 logging.info(f"SNS published!")
             except:
                 logging.exception("Error publishing to SNS topic")
+            try: # try to publish listener information if required
+                if payload["uploader_callsign"] in positions:
+                    upload_listener(payload)
+                else:
+                    logging.info(f'No position info for {payload["uploader_callsign"]}!')
+            except:
+                logging.exception("Failed to update listener")
+                return
         else:
             logging.debug(f"{thing}")
+
+    try:
+        positions[thing['from']] = {
+            "latitude": thing["latitude"],
+            "longitude": thing["longitude"],
+            "altitude": thing["altitude"] if "altitude" in thing else 0,
+            "last_sondehub_upload": None
+        }
+    except:
+        logging.debug(f"Could not set location for position update")
+        logging.debug(f"{thing}")
+
+def upload_listener(payload):
+    callsign = payload['uploader_callsign']
+    position = positions[callsign]
+    last_update = position['last_sondehub_upload'] 
+    if last_update == None or(datetime.datetime.now() - last_update).seconds > TIME_BETWEEN_LISTENER_UPDATES:
+        listener = {
+            "software_name" : "SondeHub APRS-IS Gateway",
+            "software_version": VERSION,
+
+            "uploader_callsign": callsign,
+            "uploader_position": [
+                position["latitude"],
+                position["longitude"],
+                position["altitude"]
+            ],
+            "mobile": False
+        }
+        sns.publish(
+                TopicArn=SNS_LISTENER,
+                Message=json.dumps(listener)
+        )
+        logging.info(listener)
+        logging.info(f"Listener SNS published!")
+        positions[callsign]["last_sondehub_upload"] = datetime.datetime.now()
+
 
 def aprs_to_sondehub(thing):
     # use cached time stamp if none provided
@@ -159,8 +233,28 @@ def aprs_to_sondehub(thing):
 
     return payload
 
-a = aprs.TCP(CALLSIGN.encode(), str(aprslib.passcode(CALLSIGN)).encode(), aprs_filter="s/O//".encode()) # filter position and balloon
-a.start()
+def chase_aprs_to_sondehub(thing):
+    payload = {
+        "software_name" : "SondeHub APRS-IS Gateway",
+        "software_version": VERSION,
 
-a.interface.settimeout(None)
-a.receive(callback=parser)
+        "uploader_callsign": thing['from'],
+        "path": ",".join(thing["path"]),
+        "uploader_position": [
+            thing["latitude"],
+            thing["longitude"],
+            thing["altitude"] if "altitude" in thing else 0
+        ],
+        "uploader_radio": thing["comment"] if "comment" in thing else None,
+        "raw": thing["raw"],
+        "aprs_tocall": thing["to"],
+        "mobile": True
+    }
+
+    return payload
+while 1:
+    AIS = aprslib.IS(CALLSIGN,aprslib.passcode(CALLSIGN), port=14580)
+    AIS.set_filter("t/p")
+    AIS.connect()
+
+    AIS.consumer(callback=parser, raw=True)
