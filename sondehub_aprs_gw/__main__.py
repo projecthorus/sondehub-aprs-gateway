@@ -5,6 +5,7 @@ import boto3
 import os
 import logging 
 import sys
+import urllib.request
 import datetime
 import pprint
 import json
@@ -15,7 +16,7 @@ VERSION = "2023.07.30"
 
 CALLSIGN = os.getenv("CALLSIGN")
 SNS_PAYLOAD = os.getenv("SNS")
-SNS_LISTENER = os.getenv("SNS_LISTENER")
+LISTENER_API = "https://api.v2.sondehub.org/amateur/listeners"
 TIME_BETWEEN_LISTENER_UPDATES = 600 # 10 minutes
 logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("aprslib").setLevel(logging.INFO)
@@ -102,6 +103,14 @@ def isHam(thing):
     # so we consider it to be an amateur balloon. Filtering based on altitude will be handled in the tracker.
     return True
 
+def post_listener(body):
+    req = urllib.request.Request(LISTENER_API,method='PUT')
+    req.add_header('Content-Type', 'application/json; charset=utf-8')
+    jsondataasbytes = json.dumps(body).encode('utf-8')   # needs to be bytes
+    req.add_header('Content-Length', len(jsondataasbytes))
+    response = urllib.request.urlopen(req, jsondataasbytes)
+    logging.debug(response)
+
 def parser(x):
     try:
         thing = aprslib.parse(bytes(x))
@@ -118,15 +127,14 @@ def parser(x):
         logging.info(f"{thing}")
         try:
             payload = chase_aprs_to_sondehub(thing)
+            if "comment" in thing:
+                payload['comment'] = thing['comment']
             logging.info(f"payload: \n{pprint.pformat(payload)}\n")
         except Exception as e:
                 logging.exception("Error converting to SondeHub payload type", exc_info=e)
                 return
         try:
-            sns.publish(
-                TopicArn=SNS_LISTENER,
-                Message=json.dumps(payload)
-            )
+            post_listener(payload)
             logging.info(f"SNS published!")
         except:
             logging.exception("Error publishing to SNS topic")
@@ -188,10 +196,7 @@ def upload_listener(payload):
             ],
             "mobile": False
         }
-        sns.publish(
-                TopicArn=SNS_LISTENER,
-                Message=json.dumps(listener)
-        )
+        post_listener(listener)
         logging.info(listener)
         logging.info(f"Listener SNS published!")
         positions[callsign]["last_sondehub_upload"] = datetime.datetime.now()
