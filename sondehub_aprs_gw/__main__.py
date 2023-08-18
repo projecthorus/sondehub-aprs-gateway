@@ -12,18 +12,20 @@ import json
 from collections import OrderedDict
 from .comment_telemetry import extract_comment_telemetry
 
-VERSION = "2023.07.30"
+VERSION = os.getenv("COMMIT_SHA") if os.getenv("COMMIT_SHA") else "local"
 
 CALLSIGN = os.getenv("CALLSIGN")
 SNS_PAYLOAD = os.getenv("SNS")
 LISTENER_API = "https://api.v2.sondehub.org/amateur/listeners"
 TIME_BETWEEN_LISTENER_UPDATES = 600 # 10 minutes
+TIME_BETWEEN_SONDEHUB_MESSAGES = 60*60*4 # 4 hours
 logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("aprslib").setLevel(logging.INFO)
 logging.getLogger("botocore").setLevel(logging.WARNING)
 sns = boto3.client('sns')
 
 positions = {}
+last_messaged = {}
 
 rx_times = OrderedDict()
 
@@ -73,7 +75,6 @@ BLOCKED_FROMCALLS = (
     'WIDE' # Corrupted packets due to bad iGates.
 )
 
-POSITIONS = {}
 
 def isHam(thing):
     if "SONDEGATE" in thing["path"]: # {'raw': 'T1310753>APRARX,SONDEGATE,TCPIP,qAR,DF7OA-12:/233445h5242.24N/00959.93EO152/042/A=043155 Clb=3.7m/s t=-55.5C 405.701 MHz Type=RS41-SGP Radiosonde auto_rx v1.3.2 !w,%!', 'from': 'T1310753', 'to': 'APRARX', 'path': ['SONDEGATE', 'TCPIP', 'qAR', 'DF7OA-12'], 'via': 'DF7OA-12', 'messagecapable': False, 'raw_timestamp': '233445h', 'timestamp': 1641771285, 'format': 'uncompressed', 'posambiguity': 0, 'symbol': 'O', 'symbol_table': '/', 'latitude': 52.70402014652015, 'longitude': 9.99884065934066, 'course': 152, 'speed': 77.784, 'altitude': 13153.644, 'daodatumbyte': 'W', 'comment': 'Clb=3.7m/s t=-55.5C 405.701 MHz Type=RS41-SGP Radiosonde auto_rx v1.3.2'}
@@ -150,11 +151,13 @@ def parser(x):
                 logging.exception("Error converting to SondeHub payload type", exc_info=e)
                 return
             try:
-                sns.publish(
-                    TopicArn=SNS_PAYLOAD,
-                    Message=json.dumps(payload)
-                )
-                logging.info(f"SNS published!")
+                if SNS_PAYLOAD:
+                    sns.publish(
+                        TopicArn=SNS_PAYLOAD,
+                        Message=json.dumps(payload)
+                    )
+                    logging.info(f"SNS published!")
+                messsage(thing['from'])
             except:
                 logging.exception("Error publishing to SNS topic")
             try: # try to publish listener information if required
@@ -260,6 +263,17 @@ def chase_aprs_to_sondehub(thing):
     }
 
     return payload
+
+def messsage(callsign):
+    if callsign in last_messaged and (datetime.datetime.now() - last_messaged[callsign]).seconds < TIME_BETWEEN_SONDEHUB_MESSAGES:
+        return # don't need to send a message - too soon
+    aprs_callsign = callsign.ljust(9, ' ')
+    aprs_message_string = f"SHUB>APRS,TCPIP*::"+aprs_callsign+":"+f"Live on https://amateur.sondehub.org/{callsign}"
+    logging.info(aprs_message_string)
+    AIS.sendall(aprs_message_string)
+    logging.info("sent APRS message")
+    last_messaged[callsign] = datetime.datetime.now()
+
 while 1:
     AIS = aprslib.IS(CALLSIGN,aprslib.passcode(CALLSIGN), port=14580)
     AIS.set_filter("t/p")
