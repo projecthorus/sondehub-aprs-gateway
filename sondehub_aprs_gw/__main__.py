@@ -141,7 +141,7 @@ def parser(x):
             logging.exception("Error publishing to SNS topic")
 
     # balloons
-    if thing["format"] != "object" and thing['symbol'] == 'O' and thing['symbol_table'] == "/":
+    if thing["format"] == "position" and 'symbol' in thing and 'symbol_table' in thing and thing['symbol'] == 'O' and thing['symbol_table'] == "/":
         if isHam(thing):
             logging.info(f"{thing}")
             try:
@@ -275,8 +275,10 @@ def messsage(callsign):
     last_messaged[callsign] = datetime.datetime.now()
 
 while 1:
-    AIS = aprslib.IS(CALLSIGN,aprslib.passcode(CALLSIGN), port=14580)
-    AIS.set_filter("t/p")
-    AIS.connect()
-
-    AIS.consumer(callback=parser, raw=True)
+    try:
+        AIS = aprslib.IS(CALLSIGN,aprslib.passcode(CALLSIGN), port=14580)
+        AIS.set_filter("t/p")
+        AIS.connect()
+        AIS.consumer(callback=parser, raw=True)
+    except:
+        logging.exception("Error with AIS consumer")
