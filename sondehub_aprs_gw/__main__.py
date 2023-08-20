@@ -141,7 +141,7 @@ def parser(x):
             logging.exception("Error publishing to SNS topic")
 
     # balloons
-    if thing["format"] == "position" and 'symbol' in thing and 'symbol_table' in thing and thing['symbol'] == 'O' and thing['symbol_table'] == "/":
+    if thing["format"] != "object" and 'symbol' in thing and 'symbol_table' in thing and thing['symbol'] == 'O' and thing['symbol_table'] == "/":
         if isHam(thing):
             logging.info(f"{thing}")
             try:
