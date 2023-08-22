@@ -160,8 +160,11 @@ def parser(x):
                 messsage(thing['from'])
             except:
                 logging.exception("Error publishing to SNS topic")
-            try: # try to publish listener information if required
-                if payload["uploader_callsign"] in positions:
+
+            # Publish listener information if we can, but only if the payload is above 1500m altitude.
+            # This helps avoid uploading listeners for cars running the balloon icon...
+            try:
+                if (payload["uploader_callsign"] in positions) and (thing['altitude'] > 1500.0) :
                     upload_listener(payload)
                 else:
                     logging.info(f'No position info for {payload["uploader_callsign"]}!')
