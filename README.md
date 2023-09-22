@@ -2,6 +2,8 @@
 
 This gateway takes a feed of traffic from APRS-IS, looks for APRS position reports that might be a high-altitude balloon, and uploads them to the SondeHub-Amateur database.
 
+This software runs within the SondeHub AWS ecosystem, and cannot be run elsewhere as it requires direct access to the SondeHub database. Please contact us if you are having issues with getting your APRS payload on the SondeHub-Amateur map. 
+
 ### Contacts
 * [Mark Jessop](https://github.com/darksidelemm) - vk5qi@rfhead.net
 * [Michaela Wheeler](https://github.com/TheSkorm) - radiosonde@michaela.lgbt
