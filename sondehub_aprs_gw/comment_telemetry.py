@@ -127,7 +127,6 @@ def extract_lightaprs_telemetry(payload):
         # Space delimited fields, but sometimes with more than one space.
         _fields = payload['comment'].split()
 
-        print(_fields)
         # Explicitly check for the expected suffix on every field.
         if _fields[0].endswith('TxC'):
             output['frame'] = int(_fields[0][:-3])
@@ -166,7 +165,7 @@ def extract_RS41ng_telemetry(payload):
         _fields = payload['comment'].split()
 
         # Extract telemetry segments
-        pattern = r'([A-Z])(\d+)'
+        pattern = r'([A-Z])(-?\d+)'
         _matches = re.findall(pattern, _fields[0])
 
         # Iterate through the found matches, and look for specific identifiers
@@ -241,6 +240,8 @@ if __name__ == "__main__":
         {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.04.14","uploader_callsign":"KB9LNS-5","path":"WIDE1-1,WIDE2-1,qAO,KB9LNS-5","time_received":"2023-04-14T18:20:04.848026Z","payload_callsign":"KB9LNS-11","datetime":"2023-04-14T18:20:02.000000Z","lat":40.47531868131868,"lon":-88.94545054945056,"alt":261.8232,"comment":"009TxC  23.50C  983.29hPa  4.92V 04S Testing LightAPRS-W 2.0","raw":"KB9LNS-11>APLIGA,WIDE1-1,WIDE2-1,qAO,KB9LNS-5:/182002h4028.51N/08856.72WO158/002/A=000859 009TxC  23.50C  983.29hPa  4.92V 04S Testing LightAPRS-W 2.0 !wta!","aprs_tocall":"APLIGA","modulation":"APRS","position":"40.47531868131868,-88.94545054945056"},
         # RS41ng
         {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.04.14","uploader_callsign":"F6ASP","path":"WIDE1-1,WIDE2-1,qAO,F6ASP","time_received":"2023-04-14T16:28:43.047244Z","payload_callsign":"F1DZP-11","datetime":"2023-04-14T16:28:43.047218Z","lat":50.94133333333333,"lon":1.8599999999999999,"alt":0.9144000000000001,"comment":"P6S7T29V2947C00 JO00WW - RS41ng radiosonde Toto test","raw":"F1DZP-11>APZ41N,WIDE1-1,WIDE2-1,qAO,F6ASP:!5056.48N/00151.60EO021/000/A=000003/P6S7T29V2947C00 JO00WW - RS41ng radiosonde Toto test","aprs_tocall":"APZ41N","modulation":"APRS","position":"50.94133333333333,1.8599999999999999"},
+        # Another RS41ng packet, with a negative temperature
+        {"software_name":"SondeHub APRS-IS Gateway","software_version":"71e6068","uploader_callsign":"DB0FRI-10","path":"WIDE1-1,WIDE2-1,qAU,DB0FRI-10","time_received":"2023-09-29T08:51:27.586394Z","payload_callsign":"DJ9AS-11","datetime":"2023-09-29T08:51:27.586372Z","lat":51.150333333333336,"lon":7.582333333333334,"alt":26406.0432,"comment":"P436S10T-8V2786C09","raw":"DJ9AS-11>APZ41N,WIDE1-1,WIDE2-1,qAU,DB0FRI-10:!5109.02N/00734.94EO305/003/A=086634/P436S10T-8V2786C09","aprs_tocall":"APZ41N","modulation":"APRS","model":"RS41ng","frame":436,"sats":10,"batt":2.786,"position":"51.150333333333336,7.582333333333334"},
         # Unknown tracker, sending Sats=0
         {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.06.24","uploader_callsign":"IS0HHA-12","path":"WIDE2-2,qAR,IS0HHA-12","time_received":"2023-07-29T22:32:17.713152Z","payload_callsign":"IS0HHA-2","datetime":"2023-07-29T22:32:15.000000Z","lat":-21.038369963369963,"lon":115.07478021978022,"alt":0,"comment":"Clb=0.00 Volt=2.76 Sats=0 Fixed=0 - RS41 tracker","raw":"IS0HHA-2>APZQVA,WIDE2-2,qAR,IS0HHA-12:@223215h2102.30S/11504.48EO045/000/A=000000!w5_!Clb=0.00 Volt=2.76 Sats=0 Fixed=0 - RS41 tracker","aprs_tocall":"APZQVA","modulation":"APRS","position":"-21.038369963369963,115.07478021978022"},
         # Unknown tracker, sending Sat=0
