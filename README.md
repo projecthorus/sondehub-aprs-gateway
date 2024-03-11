@@ -58,6 +58,8 @@ Note that the telemetry must be exactly in the provided format, else parsing wil
 
 If you would like support added for another tracker model, please contact us.
 
+## Chase-Car Positions
+Chase cars can have their positions plotted on the SondeHub-Amateur tracker by adding `SHUB` or `SHUB1-1` to their APRS path. Note that we do not support APRS chase car position uploading for the 'professional' (meteorological) SondeHub tracker.
 
 ## Testing & Development
 
