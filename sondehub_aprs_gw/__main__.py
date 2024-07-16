@@ -67,6 +67,7 @@ BLOCKED_TOCALLS = (
     'APDR', # APRSDroid
     'APRARX', # Radiosonde Auto RX
     'OGFLR', # OGN Flarm Traffic (May need to add more tocalls here - refer https://github.com/glidernet/ogn-aprs-protocol/blob/master/aprsmsgs.txt )
+    'APDG', # MMVDM and other digital voice gateways.
 )
 
 # A list of 'from' calls, which we know are stations feeding in non-high-altitude-balloon traffic. 
