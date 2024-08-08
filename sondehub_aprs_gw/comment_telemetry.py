@@ -33,8 +33,8 @@ def extract_comment_telemetry(payload):
         if payload['aprs_tocall'].startswith('APELK0'):
             return extract_wb8elk_skytracker_telemetry(payload)
 
-        # LightAPRS
-        if payload['aprs_tocall'] == 'APLIGA':
+        # LightAPRS / LightAPRS LoRa
+        if payload['aprs_tocall'] == 'APLIGA' or payload['aprs_tocall'] == 'APLIGP':
             return extract_lightaprs_telemetry(payload)
 
         # RS41ng
@@ -147,12 +147,17 @@ def extract_lightaprs_telemetry(payload):
         if _fields[4].endswith('S'):
             output['sats'] = int(_fields[4][:-1])
 
+        if payload['aprs_tocall'] == "APLIGP":
+            output['model'] = 'LightTracker (LoRa)'
+
         return output
 
     except Exception as e:
         logging.exception("Error extracting telemetry from LightAPRS Tracker")
 
     return {}
+
+
 
 
 def extract_RS41ng_telemetry(payload):
@@ -288,7 +293,9 @@ if __name__ == "__main__":
         # Unknown tracker, sending Sats=0
         {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.06.24","uploader_callsign":"IS0HHA-12","path":"WIDE2-2,qAR,IS0HHA-12","time_received":"2023-07-29T22:32:17.713152Z","payload_callsign":"IS0HHA-2","datetime":"2023-07-29T22:32:15.000000Z","lat":-21.038369963369963,"lon":115.07478021978022,"alt":0,"comment":"Clb=0.00 Volt=2.76 Sats=0 Fixed=0 - RS41 tracker","raw":"IS0HHA-2>APZQVA,WIDE2-2,qAR,IS0HHA-12:@223215h2102.30S/11504.48EO045/000/A=000000!w5_!Clb=0.00 Volt=2.76 Sats=0 Fixed=0 - RS41 tracker","aprs_tocall":"APZQVA","modulation":"APRS","position":"-21.038369963369963,115.07478021978022"},
         # Unknown tracker, sending Sat=0
-        {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.06.24","uploader_callsign":"IT9DBI-4","path":"IT9LSG-2*,WIDE2-2,qAO,IT9DBI-4","time_received":"2023-07-29T16:16:06.869305Z","payload_callsign":"IT9EJE-12","datetime":"2023-07-29T16:16:06.869281Z","lat":22.591666666666665,"lon":-11.227833333333333,"alt":3099.2064,"comment":"Pkt=2/Sat=0/T25/Mvolts=272/Temp=32.1°C /RS41 Test qrv R3 IR9UBR whatsapp 3393985905","raw":"IT9EJE-12>APZQAP,IT9LSG-2*,WIDE2-2,qAO,IT9DBI-4:!2235.50N/01113.67WO/A=010168/Pkt=2/Sat=0/T25/Mvolts=272/Temp=32.1°C /RS41 Test qrv R3 IR9UBR whatsapp 3393985905","aprs_tocall":"APZQAP","modulation":"APRS","position":"22.591666666666665,-11.227833333333333"}
+        {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.06.24","uploader_callsign":"IT9DBI-4","path":"IT9LSG-2*,WIDE2-2,qAO,IT9DBI-4","time_received":"2023-07-29T16:16:06.869305Z","payload_callsign":"IT9EJE-12","datetime":"2023-07-29T16:16:06.869281Z","lat":22.591666666666665,"lon":-11.227833333333333,"alt":3099.2064,"comment":"Pkt=2/Sat=0/T25/Mvolts=272/Temp=32.1°C /RS41 Test qrv R3 IR9UBR whatsapp 3393985905","raw":"IT9EJE-12>APZQAP,IT9LSG-2*,WIDE2-2,qAO,IT9DBI-4:!2235.50N/01113.67WO/A=010168/Pkt=2/Sat=0/T25/Mvolts=272/Temp=32.1°C /RS41 Test qrv R3 IR9UBR whatsapp 3393985905","aprs_tocall":"APZQAP","modulation":"APRS","position":"22.591666666666665,-11.227833333333333"},
+        # Light-APRS LoRa-APRS Tracker
+        {"software_name":"SondeHub APRS-IS Gateway","software_version":"c722840","uploader_callsign":"K9WS-10","path":"WIDE1-1,qAR,K9WS-10","time_received":"2024-08-07T21:09:56.355682Z","payload_callsign":"kf0mds-2","datetime":"2024-08-07T21:09:49.000000Z","lat":37.73266666666667,"lon":-121.87616666666666,"alt":892.4544000000001,"comment":"203TXC 31C  911.24hPa 4.5V 14S LoRa APRS LightTracker by TA2MUN & TA2WX","raw":"kf0mds-2>APLIGP,WIDE1-1,qAR,K9WS-10:/210949h3743.96N/12152.57WO032/011/A=002928 203TXC 31C  911.24hPa 4.5V 14S LoRa APRS LightTracker by TA2MUN & TA2WX","aprs_tocall":"APLIGP","modulation":"APRS","position":"37.73266666666667,-121.87616666666666"}
     ]
 
 
