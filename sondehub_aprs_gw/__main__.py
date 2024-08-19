@@ -11,6 +11,7 @@ import pprint
 import json
 from collections import OrderedDict
 from .comment_telemetry import extract_comment_telemetry
+from .modified_packets import is_modified_packet
 
 VERSION = os.getenv("COMMIT_SHA") if os.getenv("COMMIT_SHA") else "local"
 
@@ -100,6 +101,9 @@ def isHam(thing):
             if thing["to"] == thing["from"]:
                 return False
 
+    # Detect packets that have been modified by an iGate and block them here.
+    if is_modified_packet(thing):
+        return False
 
     # Default case. We have a position report with a balloon symbol, and it's passed the above checks,
     # so we consider it to be an amateur balloon. Filtering based on altitude will be handled in the tracker.

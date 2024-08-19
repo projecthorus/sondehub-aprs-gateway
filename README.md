@@ -35,8 +35,10 @@ We block packets from the following 'tocall' destinations:
 We block packets with the following in their path:
  - `SONDEGATE` - Radiosonde Gateways
 
-We also block packets from the following source callsigns:
+We block packets from the following source callsigns:
  - Any source callsign containing `WIDE`, which usually indicates a corrupted packet.
+
+We block packets where RSSI and SNR metadata has been added onto the end of the comment field. This is usually done by LoRa-APRS iGates, and causes issues with de-duping and speed calculations. If you are flying a payload which actually is reporting some valid RSSI or SNR data within the comment, please contact us!
 
 ## Timestamps
 The APRS-IS importer will parse and use timestamps included in APRS packets, e.g. the `HHMMSSh` format. Note that we assume that all timestamps are in UTC. If this is not the case, you may experience strange behaviour on the tracker!
@@ -49,10 +51,12 @@ There is some limited support for decoding telemetry from the comment field of t
   - Allowed Format: `,StrTrk,84,9,1.46V,-14C,2127Pa,`
 - WB8ELK [SkyTracker](https://gmigliarini.wixsite.com/wb8elk)
   - Allowed Format: `12 4.34 33 1991 101`
-- [LightAPRS](https://github.com/lightaprs/LightAPRS-W-1.0)
+- [LightAPRS](https://github.com/lightaprs/LightAPRS-W-1.0) (Also works for LightAPRS LoRa software)
   - Allowed Format: `015TxC 29.00C 1019.86hPa 4.59V 06S Custom comment here`
 - [RS41ng](https://github.com/mikaelnousiainen/RS41ng/)
-  - Allowed Format: `P6S7T29V2947C00`
+  - Allowed Format: `P6S7T29V2947C00`    (Note - Voltage is in mV)
+- [RS41HUP-V2](https://github.com/whallmann/RS41HUP_V2)
+  - Allowed Format: `P809S8T-30V127`     (Note - Voltage is in hundredths of a Volt)
 
 Note that the telemetry must be exactly in the provided format, else parsing will fail.
 
