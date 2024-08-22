@@ -81,6 +81,9 @@ BLOCKED_FROMCALLS = (
 def isHam(thing):
     if "SONDEGATE" in thing["path"]: # {'raw': 'T1310753>APRARX,SONDEGATE,TCPIP,qAR,DF7OA-12:/233445h5242.24N/00959.93EO152/042/A=043155 Clb=3.7m/s t=-55.5C 405.701 MHz Type=RS41-SGP Radiosonde auto_rx v1.3.2 !w,%!', 'from': 'T1310753', 'to': 'APRARX', 'path': ['SONDEGATE', 'TCPIP', 'qAR', 'DF7OA-12'], 'via': 'DF7OA-12', 'messagecapable': False, 'raw_timestamp': '233445h', 'timestamp': 1641771285, 'format': 'uncompressed', 'posambiguity': 0, 'symbol': 'O', 'symbol_table': '/', 'latitude': 52.70402014652015, 'longitude': 9.99884065934066, 'course': 152, 'speed': 77.784, 'altitude': 13153.644, 'daodatumbyte': 'W', 'comment': 'Clb=3.7m/s t=-55.5C 405.701 MHz Type=RS41-SGP Radiosonde auto_rx v1.3.2'}
         return False
+    
+    if "SONDA" in thing["path"]: # 3Z3Z-11>SONDA,TCPIP*,qAS,3Z3Z:@123542h5205.17N/01439.94EO000/008/A=117572 RS41-SGP, V3640635, 405,1 MHz, Rising 7,1m/s
+        return False
 
     if thing["to"].startswith(BLOCKED_TOCALLS): 
         return False
