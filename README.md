@@ -34,6 +34,7 @@ We block packets from the following 'tocall' destinations:
 
 We block packets with the following in their path:
  - `SONDEGATE` - Radiosonde Gateways
+ - `SONDA` - Another kind of radiosonde gateway
 
 We block packets from the following source callsigns:
  - Any source callsign containing `WIDE`, which usually indicates a corrupted packet.
