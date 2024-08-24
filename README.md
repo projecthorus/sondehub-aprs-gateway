@@ -35,6 +35,7 @@ We block packets from the following 'tocall' destinations:
 
 We block packets with the following in their path:
  - `SONDEGATE` - Radiosonde Gateways
+ - `NOHUB` - Use this if you want to send packets into APRS-IS that you *don't* want imported.
 
 We block packets from the following source callsigns:
  - Any source callsign containing `WIDE`, which usually indicates a corrupted packet.
