@@ -22,6 +22,20 @@ def is_modified_packet(payload):
         _comment_upper = payload['comment'].upper()
         if ('RSSI' in _comment_upper) and ('SNR' in _comment_upper) and ('DB' in _comment_upper):
             return True
+        
+        if ('RSSI=' in _comment_upper) and ('SNR=' in _comment_upper):
+            return True
+        
+        # Check for comments with a "DS -15.75 RS -106" construct on the end
+        try:
+            _fields = payload['comment'].rstrip().split(" ")
+            if (_fields[-2] == "RS") and (_fields[-4] == "DS"):
+                _rssi = float(_fields[-1])
+                _snr = float(_fields[-3])
+                return True
+        except:
+            pass
+
 
     except Exception as e:
         logging.exception("Failed modified packet detection.")
@@ -63,6 +77,9 @@ if __name__ == "__main__":
         {"software_name":"SondeHub APRS-IS Gateway","software_version":"abc2655","uploader_callsign":"SQ6SLB-10","path":"qAS,SQ6SLB-10","time_received":"2024-08-14T12:53:36.845271Z","payload_callsign":"SP0LND-3","datetime":"2024-08-14T12:53:36.845245Z","lat":52.7645,"lon":20.028833333333335,"alt":12911.937600000001,"comment":"P567S30F0R0N31Q1 S rssi: -117.25dBm, snr: -3.25dB, err: -5131Hz","raw":"SP0LND-3>APLRG1,qAS,SQ6SLB-10:!5245.87N/02001.73EO117/054/A=042362/P567S30F0R0N31Q1 S rssi: -117.25dBm, snr: -3.25dB, err: -5131Hz","aprs_tocall":"APLRG1","modulation":"APRS","position":"52.7645,20.028833333333335"},
         {"software_name":"SondeHub APRS-IS Gateway","software_version":"abc2655","uploader_callsign":"SQ6SLB-10","path":"qAS,SQ6SLB-10","time_received":"2024-08-14T12:47:02.523385Z","payload_callsign":"SP0LND-3","datetime":"2024-08-14T12:47:02.523362Z","lat":52.807833333333335,"lon":19.885666666666665,"alt":12903.708,"comment":"P552S30F0R0N31Q1 S rssi: -109.00dBm, snr: 1.00dB, err: -5111Hz","raw":"SP0LND-3>APLRG1,qAS,SQ6SLB-10:!5248.47N/01953.14EO115/052/A=042335/P552S30F0R0N31Q1 S rssi: -109.00dBm, snr: 1.00dB, err: -5111Hz","aprs_tocall":"APLRG1","modulation":"APRS","position":"52.807833333333335,19.885666666666665"},
         {"software_name":"SondeHub APRS-IS Gateway","software_version":"abc2655","uploader_callsign":"OK2ZAW-1","path":"qAS,OK2ZAW-1","time_received":"2024-08-14T12:47:02.262823Z","payload_callsign":"SP0LND-3","datetime":"2024-08-14T12:47:02.262801Z","lat":52.807833333333335,"lon":19.885666666666665,"alt":12903.708,"comment":"P552S30F0R0N31Q1 S  SNR=-18dB RSSI=-82db","raw":"SP0LND-3>APLRG1,qAS,OK2ZAW-1:!5248.47N/01953.14EO115/052/A=042335/P552S30F0R0N31Q1 S  SNR=-18dB RSSI=-82db","aprs_tocall":"APLRG1","modulation":"APRS","position":"52.807833333333335,19.885666666666665"},
+        {"software_name":"SondeHub APRS-IS Gateway","software_version":"abc2655","uploader_callsign":"OK2ZAW-1","path":"qAS,OK2ZAW-1","time_received":"2024-08-14T12:47:02.262823Z","payload_callsign":"SP0LND-3","datetime":"2024-08-14T12:47:02.262801Z","lat":52.807833333333335,"lon":19.885666666666665,"alt":12903.708,"comment":"P3S15O16F1N2 FT0 DS -15.75 RS -106","raw":"SP0LND-2>APLAIR,NOHUB,qAS,OK5TVR-15:!5032.81N/01531.81EO208/054/A=042250/P3S15O16F1N2 FT0 DS -15.75 RS -106","aprs_tocall":"APLRG1","modulation":"APRS","position":"52.807833333333335,19.885666666666665"},
+        {"software_name":"SondeHub APRS-IS Gateway","software_version":"abc2655","uploader_callsign":"OK2ZAW-1","path":"qAS,OK2ZAW-1","time_received":"2024-08-14T12:47:02.262823Z","payload_callsign":"SP0LND-3","datetime":"2024-08-14T12:47:02.262801Z","lat":52.807833333333335,"lon":19.885666666666665,"alt":12903.708,"comment":"P3S15O16F1N2 FT0 DS foo RS -106","raw":"SP0LND-2>APLAIR,NOHUB,qAS,OK5TVR-15:!5032.81N/01531.81EO208/054/A=042250/P3S15O16F1N2 FT0 DS foo RS -106","aprs_tocall":"APLRG1","modulation":"APRS","position":"52.807833333333335,19.885666666666665"},
+        {"software_name":"SondeHub APRS-IS Gateway","software_version":"abc2655","uploader_callsign":"OK2ZAW-1","path":"qAS,OK2ZAW-1","time_received":"2024-08-14T12:47:02.262823Z","payload_callsign":"SP0LND-3","datetime":"2024-08-14T12:47:02.262801Z","lat":52.807833333333335,"lon":19.885666666666665,"alt":12903.708,"comment":"P12S15O19F1N2 FT0 SNR=-16.50 RSSI=-122","raw":"SP0LND-2>APLAIR,NOHUB,qAR,OK1KRE-1:!5017.38N/01518.84EO207/057/A=042125/P12S15O19F1N2 FT0 SNR=-16.50 RSSI=-122","aprs_tocall":"APLRG1","modulation":"APRS","position":"52.807833333333335,19.885666666666665"},
         # These packets have not:
         {"software_name":"SondeHub APRS-IS Gateway","software_version":"abc2655","uploader_callsign":"SP3QYJ-7","path":"qAR,SP3QYJ-7","time_received":"2024-08-14T13:39:37.023694Z","payload_callsign":"SP0LND-3","datetime":"2024-08-14T13:39:37.023671Z","lat":52.40866666666667,"lon":21.065,"alt":12826.5936,"comment":"P672S25F0R0N31Q1 S","raw":"SP0LND-3>APLRG1,qAR,SP3QYJ-7:!5224.52N/02103.90EO122/056/A=042082/P672S25F0R0N31Q1 S ","aprs_tocall":"APLRG1","modulation":"APRS","position":"52.40866666666667,21.065"}
     ]
