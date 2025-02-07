@@ -37,8 +37,8 @@ def extract_comment_telemetry(payload):
         if payload['aprs_tocall'] == 'APLIGA' or payload['aprs_tocall'] == 'APLIGP':
             return extract_lightaprs_telemetry(payload)
 
-        # RS41ng
-        if payload['aprs_tocall'] == 'APZ41N':
+        # RS41ng / RS41-NFW
+        if payload['aprs_tocall'] == 'APZ41N' or payload['aprs_tocall'] == 'APZNFW':
             return extract_RS41ng_telemetry(payload)
         
         # RS41HUP (and variants)
