@@ -18,6 +18,7 @@ Currently the following filters apply. Other requirements may be added in the fu
 The position must:
  - Be a position report (not an object). This can be compressed, uncompressed, or mic-e format.
  - Use the balloon symbol (Primary Symbol Table, 'O')
+ - Be sending altitude via a standard APRS method, NOT as something in the comment.
 
 We block packets containing the following strings in the comment fields:
  - `NSM is Not Sonde Monitor`
