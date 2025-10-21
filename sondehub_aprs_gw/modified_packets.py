@@ -51,6 +51,6 @@ if __name__ == "__main__":
 
 
     for payload in data:
-        print(f"Callsign: {payload['payload_callsign']}, ToCall: {payload['aprs_tocall']}, Comment: {payload['comment']}")
-        print(f"Is a Modified Packet: {is_modified_packet(payload)}")
+        print(f"Callsign: {payload[0]['payload_callsign']}, ToCall: {payload[0]['aprs_tocall']}, Comment: {payload[0]['comment']}")
+        print(f"Is a Modified Packet: {is_modified_packet(payload[0])}")
 
