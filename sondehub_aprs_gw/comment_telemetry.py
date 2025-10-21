@@ -37,13 +37,16 @@ def extract_comment_telemetry(payload):
         if payload['aprs_tocall'] == 'APLIGA' or payload['aprs_tocall'] == 'APLIGP':
             return extract_lightaprs_telemetry(payload)
 
-        # RS41ng
-        if payload['aprs_tocall'] == 'APZ41N':
+        # RS41ng / RS41-NFW
+        if payload['aprs_tocall'] == 'APZ41N' or payload['aprs_tocall'] == 'APZNFW':
             return extract_RS41ng_telemetry(payload)
         
         # RS41HUP (and variants)
         if payload['aprs_tocall'] == 'APZQAP':
             return extract_RS41HUP_telemetry(payload)
+
+        if payload['aprs_tocall'] == 'APZM20':
+            return extract_M20_telemetry(payload)
 
         # Detect trackers that are known to send positions with no
         # GNSS lock, and report this in the comment field as 'S0'
@@ -236,6 +239,50 @@ def extract_RS41HUP_telemetry(payload):
 
     return {}
 
+def extract_M20_telemetry(payload):
+    """
+    Attempt to extract telemetry from a M20 tracker comment field.
+    Example: C5S6R0T23P10002E-349V2176 M20 radiosonde test
+    Link: https://github.com/sq2ips/m20-custom-firmware
+    """
+
+    try:
+        output = {'model': 'M20'}
+
+        # Split comment field, telemetry should be the first
+        _fields = payload['comment'].split()
+
+        # Extract telemetry segments
+        pattern = r'([A-Z])(-?\d+)'
+        _matches = re.findall(pattern, _fields[0])
+
+        # Iterate through the found matches, and look for specific identifiers
+        for _telem in _matches:
+            _type = _telem[0]
+            _data = _telem[1]
+
+            if _type == 'C':
+                output['frame'] = int(_data)
+            elif _type == 'S':
+                output['sats'] = int(_data)
+            elif _type == 'R':
+                output['gps_restarts'] = int(_data)
+            elif _type == 'T':
+                output['temp'] = int(_data)
+            elif _type == 'E':
+                output['ext_temp'] = int(_data)/10.0
+            elif _type == 'P':
+                output['ext_pressure'] = int(_data)/10.0
+            elif _type == 'V':
+                output['batt'] = int(_data)/1000.0
+
+        return output
+
+    except Exception as e:
+        logging.exception("Error extracting telemetry from M20 telemetry")
+
+    return {}
+
 def extract_aprs_s0_telemetry(payload):
     """
     Special case for a set of APRS tracker firmware (seems to be mainly for RS41s)
@@ -271,35 +318,10 @@ def extract_aprs_s0_telemetry(payload):
 if __name__ == "__main__":
     # Some test payload data.
 
-    data = [
-        # Nothing extractable from this.
-        {'software_name': 'aprs', 'aprs_tocall': 'TW1VU7-2', 'uploader_callsign': 'HB9BB', 'path': 'WIDE1-1,WIDE2-1,qAR,HB9BB', 'time_received': '2023-04-14T05:01:42.107491Z', 'payload_callsign': 'OE9IMJ-11', 'datetime': '2023-04-14T05:01:42.107172Z', 'lat': 47.27616666666667, 'lon': 9.648833333333334, 'alt': 515, 'comment': 'mou CT3001 S8 2.8C  955hPa 3.4V', 'raw': 'OE9IMJ-11>TW1VU7-2,WIDE1-1,WIDE2-1,qAR,HB9BB:`\x7fByl\x1fQO/"9S}mou CT3001 S8 2.8C  955hPa 3.4V', 'modulation': 'APRS'},
-        # WB8ELK Skytracker
-        {"software_name":"aprs","aprs_tocall":"APELK0","uploader_callsign":"KG6PJG-10","path":"WIDE2-1,qAR,KG6PJG-10","time_received":"2023-04-11T20:21:23.362218Z","payload_callsign":"KJ6IJM-12","datetime":"2023-04-11T20:21:10.000000Z","lat":34.330333333333336,"lon":-116.42416666666666,"alt":1990.9536,"comment":"12 4.34 33 1991 101","raw":"KJ6IJM-12>APELK0,WIDE2-1,qAR,KG6PJG-10:/202110h3419.82N/11625.45WO002/009/A=006532 12 4.34 33 1991 101 |\"+%g$B!-!\"!\"|","modulation":"APRS","position":"34.330333333333336,-116.42416666666666"},
-        # StratoTrack	
-        {"software_name":"aprs","aprs_tocall":"CQ","uploader_callsign":"SIMLA","path":"WIDE2-1,qAR,SIMLA","time_received":"2023-04-13T15:54:54.121790Z","payload_callsign":"KF0GOR-12","datetime":"2023-04-13T15:54:54.121763Z","lat":40.05766666666667,"lon":-104.36033333333333,"alt":25997.0016,"comment":",StrTrk,84,9,1.46V,-14C,2127Pa,","raw":"KF0GOR-12>CQ,WIDE2-1,qAR,SIMLA:!4003.46N/10421.62WO307/017/A=085292,StrTrk,84,9,1.46V,-14C,2127Pa,","modulation":"APRS","position":"40.05766666666667,-104.36033333333333"},
-        # SQ9MDD firmware with no GNSS lock
-        {"software_name":"aprs","aprs_tocall":"APZQAP","uploader_callsign":"IR9BV","path":"WIDE1-1,WIDE2-1,qAR,IR9BV","time_received":"2023-04-11T08:48:05.782402Z","payload_callsign":"IT9EWK","datetime":"2023-04-11T08:48:05.782377Z","lat":8.744166666666667,"lon":10.623833333333334,"alt":470.6112,"comment":"P8/S0/T24/V269/ 08:48:05/EV/BT-257.0°C/https://www.pirssicilia.it Beacon CW 432.450 MHz","raw":"IT9EWK>APZQAP,WIDE1-1,WIDE2-1,qAR,IR9BV:!0844.65N/01037.43EO/A=001544/P8/S0/T24/V269/ 08:48:05/EV/BT-257.0°C/https://www.pirssicilia.it Beacon CW 432.450 MHz","modulation":"APRS","position":"8.744166666666667,10.623833333333334"},
-        # LightAPRS
-        {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.04.14","uploader_callsign":"N3LLO-1","path":"W1YK-1*,WIDE2-2,qAR,N3LLO-1","time_received":"2023-04-14T19:42:45.578796Z","payload_callsign":"N0LQ-11","datetime":"2023-04-14T19:42:39.000000Z","lat":42.27433333333333,"lon":-71.8075,"alt":145.9992,"comment":"011TxC  36.10C 1034.61hPa  4.93V 08S WPI SDC Gompei-0 Mission","raw":"N0LQ-11>APLIGA,W1YK-1*,WIDE2-2,qAR,N3LLO-1:/194239h4216.46N/07148.45WO353/000/A=000479 011TxC  36.10C 1034.61hPa  4.93V 08S WPI SDC Gompei-0 Mission","aprs_tocall":"APLIGA","modulation":"APRS","position":"42.27433333333333,-71.8075"},
-        # Another LightAPRS
-        {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.04.14","uploader_callsign":"KB9LNS-5","path":"WIDE1-1,WIDE2-1,qAO,KB9LNS-5","time_received":"2023-04-14T18:20:04.848026Z","payload_callsign":"KB9LNS-11","datetime":"2023-04-14T18:20:02.000000Z","lat":40.47531868131868,"lon":-88.94545054945056,"alt":261.8232,"comment":"009TxC  23.50C  983.29hPa  4.92V 04S Testing LightAPRS-W 2.0","raw":"KB9LNS-11>APLIGA,WIDE1-1,WIDE2-1,qAO,KB9LNS-5:/182002h4028.51N/08856.72WO158/002/A=000859 009TxC  23.50C  983.29hPa  4.92V 04S Testing LightAPRS-W 2.0 !wta!","aprs_tocall":"APLIGA","modulation":"APRS","position":"40.47531868131868,-88.94545054945056"},
-        # RS41ng
-        {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.04.14","uploader_callsign":"F6ASP","path":"WIDE1-1,WIDE2-1,qAO,F6ASP","time_received":"2023-04-14T16:28:43.047244Z","payload_callsign":"F1DZP-11","datetime":"2023-04-14T16:28:43.047218Z","lat":50.94133333333333,"lon":1.8599999999999999,"alt":0.9144000000000001,"comment":"P6S7T29V2947C00 JO00WW - RS41ng radiosonde Toto test","raw":"F1DZP-11>APZ41N,WIDE1-1,WIDE2-1,qAO,F6ASP:!5056.48N/00151.60EO021/000/A=000003/P6S7T29V2947C00 JO00WW - RS41ng radiosonde Toto test","aprs_tocall":"APZ41N","modulation":"APRS","position":"50.94133333333333,1.8599999999999999"},
-        # RS41HUP
-        {"software_name":"SondeHub APRS-IS Gateway","software_version":"ce4b139","uploader_callsign":"DB0FRI","path":"WIDE1-1,qAO,DB0FRI","time_received":"2024-06-24T03:48:16.565918Z","payload_callsign":"PD3EGE-7","datetime":"2024-06-24T03:48:16.565896Z","lat":50.77733333333333,"lon":4.652333333333333,"alt":13610.234400000001,"comment":"P809S8T-30V127 RS41 Balloon","raw":"PD3EGE-7>APZQAP,WIDE1-1,qAO,DB0FRI:!5046.64N/00439.14EO/A=044653/P809S8T-30V127 RS41 Balloon","aprs_tocall":"APZQAP","modulation":"APRS","position":"50.77733333333333,4.652333333333333"},
-        # Another RS41ng packet, with a negative temperature
-        {"software_name":"SondeHub APRS-IS Gateway","software_version":"71e6068","uploader_callsign":"DB0FRI-10","path":"WIDE1-1,WIDE2-1,qAU,DB0FRI-10","time_received":"2023-09-29T08:51:27.586394Z","payload_callsign":"DJ9AS-11","datetime":"2023-09-29T08:51:27.586372Z","lat":51.150333333333336,"lon":7.582333333333334,"alt":26406.0432,"comment":"P436S10T-8V2786C09","raw":"DJ9AS-11>APZ41N,WIDE1-1,WIDE2-1,qAU,DB0FRI-10:!5109.02N/00734.94EO305/003/A=086634/P436S10T-8V2786C09","aprs_tocall":"APZ41N","modulation":"APRS","model":"RS41ng","frame":436,"sats":10,"batt":2.786,"position":"51.150333333333336,7.582333333333334"},
-        # Unknown tracker, sending Sats=0
-        {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.06.24","uploader_callsign":"IS0HHA-12","path":"WIDE2-2,qAR,IS0HHA-12","time_received":"2023-07-29T22:32:17.713152Z","payload_callsign":"IS0HHA-2","datetime":"2023-07-29T22:32:15.000000Z","lat":-21.038369963369963,"lon":115.07478021978022,"alt":0,"comment":"Clb=0.00 Volt=2.76 Sats=0 Fixed=0 - RS41 tracker","raw":"IS0HHA-2>APZQVA,WIDE2-2,qAR,IS0HHA-12:@223215h2102.30S/11504.48EO045/000/A=000000!w5_!Clb=0.00 Volt=2.76 Sats=0 Fixed=0 - RS41 tracker","aprs_tocall":"APZQVA","modulation":"APRS","position":"-21.038369963369963,115.07478021978022"},
-        # Unknown tracker, sending Sat=0
-        {"software_name":"SondeHub APRS-IS Gateway","software_version":"2023.06.24","uploader_callsign":"IT9DBI-4","path":"IT9LSG-2*,WIDE2-2,qAO,IT9DBI-4","time_received":"2023-07-29T16:16:06.869305Z","payload_callsign":"IT9EJE-12","datetime":"2023-07-29T16:16:06.869281Z","lat":22.591666666666665,"lon":-11.227833333333333,"alt":3099.2064,"comment":"Pkt=2/Sat=0/T25/Mvolts=272/Temp=32.1°C /RS41 Test qrv R3 IR9UBR whatsapp 3393985905","raw":"IT9EJE-12>APZQAP,IT9LSG-2*,WIDE2-2,qAO,IT9DBI-4:!2235.50N/01113.67WO/A=010168/Pkt=2/Sat=0/T25/Mvolts=272/Temp=32.1°C /RS41 Test qrv R3 IR9UBR whatsapp 3393985905","aprs_tocall":"APZQAP","modulation":"APRS","position":"22.591666666666665,-11.227833333333333"},
-        # Light-APRS LoRa-APRS Tracker
-        {"software_name":"SondeHub APRS-IS Gateway","software_version":"c722840","uploader_callsign":"K9WS-10","path":"WIDE1-1,qAR,K9WS-10","time_received":"2024-08-07T21:09:56.355682Z","payload_callsign":"kf0mds-2","datetime":"2024-08-07T21:09:49.000000Z","lat":37.73266666666667,"lon":-121.87616666666666,"alt":892.4544000000001,"comment":"203TXC 31C  911.24hPa 4.5V 14S LoRa APRS LightTracker by TA2MUN & TA2WX","raw":"kf0mds-2>APLIGP,WIDE1-1,qAR,K9WS-10:/210949h3743.96N/12152.57WO032/011/A=002928 203TXC 31C  911.24hPa 4.5V 14S LoRa APRS LightTracker by TA2MUN & TA2WX","aprs_tocall":"APLIGP","modulation":"APRS","position":"37.73266666666667,-121.87616666666666"}
-    ]
+    from .test_packets import not_modified
 
 
-    for payload in data:
+    for payload in not_modified:
         print(f"Callsign: {payload['payload_callsign']}, ToCall: {payload['aprs_tocall']}, Comment: {payload['comment']}")
         print(f"Extracted Telemetry: {extract_comment_telemetry(payload)}")
 

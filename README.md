@@ -18,6 +18,7 @@ Currently the following filters apply. Other requirements may be added in the fu
 The position must:
  - Be a position report (not an object). This can be compressed, uncompressed, or mic-e format.
  - Use the balloon symbol (Primary Symbol Table, 'O')
+ - Be sending altitude via a standard APRS method, NOT as something in the comment.
 
 We block packets containing the following strings in the comment fields:
  - `NSM is Not Sonde Monitor`
@@ -32,6 +33,8 @@ We block packets from the following 'tocall' destinations:
  - `APRARX` - Old radiosonde_auto_rx versions
  - `OGFLR` - Packets arriving via an Open Glider Network Gateway
  - `SONDA` - Another kind of radiosonde gateway
+ - `APLAIR` - SP0LND LoRa-APRS trackers (on request from author)
+ - `APZHUB` - SQ2CPA wspr2sondehub scripts (on request from author, this software uploads to SondeHub-Amateur separately)
 
 We block packets with the following in their path:
  - `SONDEGATE` - Radiosonde Gateways
