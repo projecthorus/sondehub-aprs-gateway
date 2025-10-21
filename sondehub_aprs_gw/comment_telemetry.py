@@ -45,6 +45,9 @@ def extract_comment_telemetry(payload):
         if payload['aprs_tocall'] == 'APZQAP':
             return extract_RS41HUP_telemetry(payload)
 
+        if payload['aprs_tocall'] == 'APZM20':
+            return extract_M20_telemetry(payload)
+
         # Detect trackers that are known to send positions with no
         # GNSS lock, and report this in the comment field as 'S0'
         if payload['aprs_tocall'] in APRS_S0_TRACKERS:
@@ -233,6 +236,50 @@ def extract_RS41HUP_telemetry(payload):
 
     except Exception as e:
         logging.exception("Error extracting telemetry from RS41HUP telemetry")
+
+    return {}
+
+def extract_M20_telemetry(payload):
+    """
+    Attempt to extract telemetry from a M20 tracker comment field.
+    Example: C5S6R0T23P10002E-349V2176 M20 radiosonde test
+    Link: https://github.com/sq2ips/m20-custom-firmware
+    """
+
+    try:
+        output = {'model': 'M20'}
+
+        # Split comment field, telemetry should be the first
+        _fields = payload['comment'].split()
+
+        # Extract telemetry segments
+        pattern = r'([A-Z])(-?\d+)'
+        _matches = re.findall(pattern, _fields[0])
+
+        # Iterate through the found matches, and look for specific identifiers
+        for _telem in _matches:
+            _type = _telem[0]
+            _data = _telem[1]
+
+            if _type == 'C':
+                output['frame'] = int(_data)
+            elif _type == 'S':
+                output['sats'] = int(_data)
+            elif _type == 'R':
+                output['gps_restarts'] = int(_data)
+            elif _type == 'T':
+                output['temp'] = int(_data)
+            elif _type == 'E':
+                output['ext_temp'] = int(_data)/10.0
+            elif _type == 'P':
+                output['ext_pressure'] = int(_data)/10.0
+            elif _type == 'V':
+                output['batt'] = int(_data)/1000.0
+
+        return output
+
+    except Exception as e:
+        logging.exception("Error extracting telemetry from M20 telemetry")
 
     return {}
 
