@@ -45,7 +45,7 @@ def extract_comment_telemetry(payload):
         if payload['aprs_tocall'] == 'APZQAP':
             return extract_RS41HUP_telemetry(payload)
 
-        if payload['aprs_tocall'] == 'APZM20':
+        if payload['aprs_tocall'] == 'APRM20':
             return extract_M20_telemetry(payload)
 
         # Detect trackers that are known to send positions with no
