@@ -45,7 +45,7 @@ def extract_comment_telemetry(payload):
         if payload['aprs_tocall'] == 'APZQAP':
             return extract_RS41HUP_telemetry(payload)
 
-        if payload['aprs_tocall'] == 'APZM20':
+        if payload['aprs_tocall'] == 'APRM20':
             return extract_M20_telemetry(payload)
 
         # Detect trackers that are known to send positions with no
@@ -322,6 +322,6 @@ if __name__ == "__main__":
 
 
     for payload in not_modified:
-        print(f"Callsign: {payload['payload_callsign']}, ToCall: {payload['aprs_tocall']}, Comment: {payload['comment']}")
-        print(f"Extracted Telemetry: {extract_comment_telemetry(payload)}")
+        print(f"Callsign: {payload[0]['payload_callsign']}, ToCall: {payload[0]['aprs_tocall']}, Comment: {payload[0]['comment']}")
+        print(f"Extracted Telemetry: {extract_comment_telemetry(payload[0])}")
 

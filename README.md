@@ -62,7 +62,9 @@ There is some limited support for decoding telemetry from the comment field of t
   - Allowed Format: `P6S7T29V2947C00`    (Note - Voltage is in mV)
 - [RS41HUP-V2](https://github.com/whallmann/RS41HUP_V2)
   - Allowed Format: `P809S8T-30V127`     (Note - Voltage is in hundredths of a Volt)
-
+- [M20](https://github.com/sq2ips/m20-custom-firmware)
+  - Allowed Format: `C5S6R0T23P10002E-349V2176`
+  
 Note that the telemetry must be exactly in the provided format, else parsing will fail.
 
 If you would like support added for another tracker model, please contact us.
