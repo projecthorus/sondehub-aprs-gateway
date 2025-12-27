@@ -275,6 +275,8 @@ def extract_M20_telemetry(payload):
                 output['ext_pressure'] = int(_data)/10.0
             elif _type == 'V':
                 output['batt'] = int(_data)/1000.0
+            elif _type == 'A':
+                output['pv_voltage'] = int(_data)/1000.0
 
         return output
 
