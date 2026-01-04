@@ -59,6 +59,9 @@ not_modified = [
         # M20
         ({"software_name": "SondeHub APRS-IS Gateway", "software_version": "f226ca1", "uploader_callsign": "SQ2IPS-2", "path": "WIDE1-1,WIDE2-1*,qAO,SQ2IPS-2", "time_received": "2025-10-21T20:11:20.722188Z", "payload_callsign": "SQ2IPS-11", "datetime": "2025-10-20T11:17:00.000000Z", "lat": 54.50580690212797, "lon": 18.538844815003444, "alt": 36479.0736, "comment": "C5S6R0T23P10002E-349V2176A1234 M20 radiosonde test", "raw": "SQ2IPS-11>APRM20,WIDE1-1,WIDE2-1*,qAO,SQ2IPS-2:@201117z/2vc`S1DjO!!C/A=119682C5S6R0T23P10002E-349V2176A1234 M20 radiosonde test", "aprs_tocall": "APRM20", "modulation": "APRS", "position": "54.50580690212797,18.538844815003444"},
          {'model': 'M20', 'frame': 5, 'sats': 6, 'gps_restarts': 0, 'temp': 23, 'ext_pressure': 1000.2, 'ext_temp': -34.9, 'batt': 2.176, 'pv_voltage': 1.234}),
+        # RS41-NFW
+        ({"software_name": "SondeHub APRS-IS Gateway", "software_version": "2026.01.03", "uploader_callsign": "SP5KAB-2", "path": "WIDE2-1,qAR,SP5KAB-2", "time_received": "2026-01-03T19:00:00.000000Z", "payload_callsign": "SP5FRA-11", "datetime": "2026-01-03T19:00:00.000000Z", "lat": 52.12345, "lon": 20.12345, "alt": 130.1496, "comment": "F2S5V3110C-7I11T-1H88P9967J0R4 test NO flight @RS41-NFW", "raw": "SP5FRA-11>APRNFW,WIDE2-1,qAR,SP5KAB-2:!5212.38N/02058.49EO/A=000427/F2S5V3110C-7I11T-1H88P9967J0R4 test NO flight @RS41-NFW", "aprs_tocall": "APRNFW", "modulation": "APRS", "position": "52.12345,20.12345"},
+         {'model': 'RS41-NFW', 'frame': 2, 'sats': 5, 'batt': 3.11, 'ascent_rate': -0.07, 'temp': 11, 'ext_temperature': -1, 'ext_humidity': 88, 'ext_pressure': 996.7, 'jam_warning': 0, 'subtype': 'RSM4x4/5 PCB revision'}),
 ]
 
 data = modified + not_modified
