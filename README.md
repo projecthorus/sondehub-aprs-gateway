@@ -64,6 +64,8 @@ There is some limited support for decoding telemetry from the comment field of t
   - Allowed Format: `P809S8T-30V127`     (Note - Voltage is in hundredths of a Volt)
 - [M20](https://github.com/sq2ips/m20-custom-firmware)
   - Allowed Format: `C5S6R0T23P10002E-349V2176A1234`
+- [RS41-NFW](https://github.com/Nevvman18/rs41-nfw)
+  - Allowed Format: `F123S8V3900C150I25T-30H40P101325J0R4`  (Note - Voltage is in mV, ascent rate is in cm/s, pressure in daPa)
   
 Note that the telemetry must be exactly in the provided format, else parsing will fail.
 

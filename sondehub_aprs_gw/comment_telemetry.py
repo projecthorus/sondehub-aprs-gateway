@@ -45,8 +45,13 @@ def extract_comment_telemetry(payload):
         if payload['aprs_tocall'] == 'APZQAP':
             return extract_RS41HUP_telemetry(payload)
 
+        # M20 SQ2IPS
         if payload['aprs_tocall'] == 'APRM20':
             return extract_M20_telemetry(payload)
+
+        # RS41-NFW
+        if payload['aprs_tocall'] == 'APRNFW':
+            return extract_NFW_telemetry(payload)
 
         # Detect trackers that are known to send positions with no
         # GNSS lock, and report this in the comment field as 'S0'
@@ -282,6 +287,71 @@ def extract_M20_telemetry(payload):
 
     except Exception as e:
         logging.exception("Error extracting telemetry from M20 telemetry")
+
+    return {}
+
+def extract_NFW_telemetry(payload):
+    """
+    Attempt to extract telemetry from a RS41-NFW tracker comment field.
+    Example: F123S8V3900C150I25T-30H40P101325J0R4
+    F - frame
+    S - sats
+    V - batt (mV -> V)
+    C - ascent_rate (cm/s -> m/s)
+    I - temp
+    T - ext_temperature
+    H - ext_humidity
+    P - ext_pressure (daPa (dekaPascal) -> hPa)
+    J - jam_warning (1 or 0)
+    R - PCB revision (determines model string)
+
+    https://github.com/Nevvman18/rs41-nfw
+    """
+
+    try:
+        # Default model if R is not present
+        output = {'model': 'RS41-NFW'}
+
+        # Split comment field, telemetry should be the first segment
+        _fields = payload['comment'].split()
+
+        # Extract telemetry segments
+        pattern = r'([A-Z])(-?\d+)'
+        _matches = re.findall(pattern, _fields[0])
+
+        for _telem in _matches:
+            _type = _telem[0]
+            _data = _telem[1]
+
+            if _type == 'F':
+                output['frame'] = int(_data)
+            elif _type == 'S':
+                output['sats'] = int(_data)
+            elif _type == 'V':
+                output['batt'] = int(_data) / 1000.0
+            elif _type == 'C':
+                output['ascent_rate'] = int(_data) / 100.0
+            elif _type == 'I':
+                output['temp'] = int(_data)
+            elif _type == 'T':
+                output['ext_temperature'] = int(_data)
+            elif _type == 'H':
+                output['ext_humidity'] = int(_data)
+            elif _type == 'P':
+                output['ext_pressure'] = int(_data) / 10.0
+            elif _type == 'J':
+                output['jam_warning'] = int(_data)
+            elif _type == 'R':
+                rev = int(_data)
+                if rev == 2:
+                    output['subtype'] = 'RSM4x1/2 PCB revision'
+                elif rev == 4:
+                    output['subtype'] = 'RSM4x4/5 PCB revision'
+
+        return output
+
+    except Exception as e:
+        logging.exception("Error extracting telemetry from RS41-NFW telemetry")
 
     return {}
 
