@@ -1,4 +1,4 @@
-FROM python:3.10-bullseye
+FROM public.ecr.aws/docker/library/python:3.10-bullseye
 
 ARG COMMIT=""
 LABEL commit=${COMMIT}
