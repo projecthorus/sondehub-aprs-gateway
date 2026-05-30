@@ -237,6 +237,13 @@ def extract_RS41HUP_telemetry(payload):
             elif _type == 'V':
                 output['batt'] = int(_data)/100.0
 
+        # Catch some other RS41HUP variants (or other firmware using this device id) sending positions with no GNSS fix
+        if 'SAT=0' in payload['comment'].upper():
+            output['sats'] = 0
+        
+        if 'SAT:0' in payload['comment'].upper():
+            output['sats'] = 0
+
         return output
 
     except Exception as e:
