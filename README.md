@@ -35,6 +35,7 @@ We block packets from the following 'tocall' destinations:
  - `SONDA` - Another kind of radiosonde gateway
  - `APLAIR` - SP0LND LoRa-APRS trackers (on request from author)
  - `APZHUB` - SQ2CPA wspr2sondehub scripts (on request from author, this software uploads to SondeHub-Amateur separately)
+ - `APCHP0` - Some MMDVM gateway position beacons.
 
 We block packets with the following in their path:
  - `SONDEGATE` - Radiosonde Gateways
