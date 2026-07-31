@@ -71,7 +71,8 @@ BLOCKED_TOCALLS = (
     'APDG', # MMVDM and other digital voice gateways.
     'SONDA', # Unknown software feeding radiosonde telemetry.
     'APLAIR', # SP0LND LoRa-APRS trackers, blocked by request.
-    'APZHUB' # SQ2CPA wspr2sondehub script, blocked by request of author.
+    'APZHUB', # SQ2CPA wspr2sondehub script, blocked by request of author.
+    'APCHP0' # MMDVM Gateways
 )
 
 # A list of 'from' calls, which we know are stations feeding in non-high-altitude-balloon traffic. 
