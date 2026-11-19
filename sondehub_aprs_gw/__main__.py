@@ -79,6 +79,7 @@ BLOCKED_TOCALLS = (
 BLOCKED_FROMCALLS = (
     'ON6DP-15', # Open Glider Network -> APRS-IS Gateway. Feeds in a lot of hot air balloons and gliders.
     'WIDE' # Corrupted packets due to bad iGates.
+    'BA4KKP-11' # Simulated data
 )
 
 
