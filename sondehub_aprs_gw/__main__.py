@@ -109,6 +109,8 @@ def isHam(thing):
         if ("Weather Balloon" in thing["comment"]): # Turkish Radiosonde uploads, circa June 2023
             if thing["to"] == thing["from"]:
                 return False
+        if "APRS-Sim" in thing["comment"]:
+            return False
 
     # Detect packets that have been modified by an iGate and block them here.
     if is_modified_packet(thing):
